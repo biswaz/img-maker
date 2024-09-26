@@ -29,22 +29,22 @@ func GenerateOrderSummaryGG(order OrderSummary, outputFile *os.File, layout Layo
 	dc.Fill()
 
 	// Load fonts
-	headerFont := loadFontGG(gobold.TTF, layout.FontSizes["header"])
-	itemFont := loadFontGG(goregular.TTF, layout.FontSizes["item"])
-	subheaderFont := loadFontGG(gobold.TTF, layout.FontSizes["subheader"])
-	totalFont := loadFontGG(gobold.TTF, layout.FontSizes["total"])
+	headerFont := loadFontGG(gobold.TTF, layout.FontSizes.Header)
+	itemFont := loadFontGG(goregular.TTF, layout.FontSizes.Item)
+	subheaderFont := loadFontGG(gobold.TTF, layout.FontSizes.Subheader)
+	totalFont := loadFontGG(gobold.TTF, layout.FontSizes.Total)
 
 	dc.SetColor(color.Black)
 
 	// Draw header
 	y := float64(layout.Margin + layout.HeaderHeight/2)
-	dc.SetFontFace(truetype.NewFace(headerFont, &truetype.Options{Size: layout.FontSizes["header"]}))
+	dc.SetFontFace(truetype.NewFace(headerFont, &truetype.Options{Size: layout.FontSizes.Header}))
 	dc.DrawStringAnchored("Order Summary", float64(layout.Width/2), y, 0.5, 0.5)
 
 	// Remove or comment out any SetColor calls here that might be changing the color
 
 	// Draw horizontal line
-	y += float64(layout.HeaderHeight/2)
+	y += float64(layout.HeaderHeight / 2)
 	drawHorizontalLineGG(dc, layout.Margin*2, layout.Width-layout.Margin*2, int(y))
 
 	// Ensure color is set to black before drawing items
@@ -52,27 +52,27 @@ func GenerateOrderSummaryGG(order OrderSummary, outputFile *os.File, layout Layo
 
 	// Draw items
 	y += float64(layout.SectionSpacing)
-	dc.SetFontFace(truetype.NewFace(subheaderFont, &truetype.Options{Size: layout.FontSizes["subheader"]}))
+	dc.SetFontFace(truetype.NewFace(subheaderFont, &truetype.Options{Size: layout.FontSizes.Subheader}))
 	dc.DrawString("Items", float64(layout.Margin*2), y)
 
 	y += dc.FontHeight() + float64(layout.ItemSpacing)
-	dc.SetFontFace(truetype.NewFace(itemFont, &truetype.Options{Size: layout.FontSizes["item"]}))
+	dc.SetFontFace(truetype.NewFace(itemFont, &truetype.Options{Size: layout.FontSizes.Item}))
 
 	for _, item := range order.Items {
 		itemText := formatItem(item)
 		wrappedText := wrapTextGG(dc, itemText, float64(layout.Width-layout.Margin*5))
-		
+
 		for i, line := range wrappedText {
 			dc.DrawString(line, float64(layout.Margin*3), y)
-			
+
 			if i == 0 {
 				priceStr := fmt.Sprintf("%s %.2f", order.Currency, item.Price*float64(item.Quantity))
 				dc.DrawStringAnchored(priceStr, float64(layout.Width-layout.Margin*2), y, 1, 0)
 			}
-			
+
 			y += dc.FontHeight()
 		}
-		
+
 		y += float64(layout.ItemSpacing)
 	}
 
@@ -81,7 +81,7 @@ func GenerateOrderSummaryGG(order OrderSummary, outputFile *os.File, layout Layo
 	drawHorizontalLineGG(dc, layout.Margin*2, layout.Width-layout.Margin*2, int(y))
 	y += float64(layout.SectionSpacing)
 
-	dc.SetFontFace(truetype.NewFace(totalFont, &truetype.Options{Size: layout.FontSizes["total"]}))
+	dc.SetFontFace(truetype.NewFace(totalFont, &truetype.Options{Size: layout.FontSizes.Total}))
 	drawTotalLineGG(dc, "Subtotal:", order.Subtotal, y, layout, order.Currency)
 	y += dc.FontHeight() + float64(layout.SectionSpacing)
 	drawTotalLineGG(dc, "Shipping:", order.Shipping, y, layout, order.Currency)
@@ -157,13 +157,13 @@ func calculateHeight(order OrderSummary, layout Layout) int {
 	height += layout.SectionSpacing // Space after header
 
 	// Items section
-	height += int(layout.FontSizes["subheader"]) // "Items" subheader
+	height += int(layout.FontSizes.Subheader) // "Items" subheader
 	height += layout.ItemSpacing
 
 	// Calculate height for each item
 	dc := gg.NewContext(1, 1) // Temporary context for text measurements
-	itemFont := loadFontGG(goregular.TTF, layout.FontSizes["item"])
-	dc.SetFontFace(truetype.NewFace(itemFont, &truetype.Options{Size: layout.FontSizes["item"]}))
+	itemFont := loadFontGG(goregular.TTF, layout.FontSizes.Item)
+	dc.SetFontFace(truetype.NewFace(itemFont, &truetype.Options{Size: layout.FontSizes.Item}))
 
 	for _, item := range order.Items {
 		itemText := formatItem(item)
@@ -172,10 +172,9 @@ func calculateHeight(order OrderSummary, layout Layout) int {
 	}
 
 	// Totals section
-	height += layout.SectionSpacing * 2 // Space before and after horizontal line
-	height += int(layout.FontSizes["total"]) * 4 // Four lines: Subtotal, Shipping, Taxes, Total
-	height += layout.SectionSpacing * 5 // Spacing between total lines
+	height += layout.SectionSpacing * 2       // Space before and after horizontal line
+	height += int(layout.FontSizes.Total) * 4 // Four lines: Subtotal, Shipping, Taxes, Total
+	height += layout.SectionSpacing * 5       // Spacing between total lines
 
 	return height
 }
-

@@ -23,9 +23,9 @@ func main() {
 			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
 			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
 			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
 		},
 		Subtotal: 2357.97,
+		Discount: 100.00,
 		Shipping: 50.00,
 		Taxes:    235.80,
 		Total:    2643.77,
@@ -40,11 +40,11 @@ func main() {
 		HeaderHeight:   80,
 		ItemSpacing:    8,
 		SectionSpacing: 20,
-		FontSizes: map[string]float64{
-			"header":    24,
-			"subheader": 18,
-			"item":      12,
-			"total":     14,
+		FontSizes: ordersummary.FontSizes{
+			Header:    24,
+			Subheader: 18,
+			Item:      12,
+			Total:     14,
 		},
 	}
 
@@ -63,6 +63,7 @@ func main() {
 		ShippingText: "Shipping:",
 		TaxesText:    "Taxes:",
 		TotalText:    "Total:",
+		DiscountText: "Discount:",
 	}
 
 	err = ordersummary.GenerateOrderSummary(order, outputFile, layout, textContent)
