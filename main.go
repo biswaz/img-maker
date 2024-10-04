@@ -12,18 +12,6 @@ func main() {
 	log.Println("Starting the generator")
 
 	order := ordersummary.OrderSummary{
-		Items: []ordersummary.Item{
-			{Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			{Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-			// {Name: "Phalaenopsis Amabilis 'Moth Orchid' - Large White Blooms, Ceramic Pot, 2-3 Flower Spikes", Quantity: 2, Price: 349.99},
-		},
 		Subtotal: 2357.97,
 		Discount: 100.00,
 		Shipping: 50.00,
@@ -32,11 +20,11 @@ func main() {
 		Currency: "INR",
 	}
 
-	order.Items = append(order.Items, Items...)
+	order.Items = append(order.Items, Items[:5]...)
 
 	layout := ordersummary.Layout{
 		Width:          700,
-		Margin:         20,
+		Margin:         25,
 		HeaderHeight:   80,
 		ItemSpacing:    8,
 		SectionSpacing: 20,
@@ -66,7 +54,7 @@ func main() {
 		DiscountText: "Discount:",
 	}
 
-	err = ordersummary.GenerateOrderSummary(order, outputFile, layout, textContent)
+	err = ordersummary.GenerateOrderSummary(order, outputFile, layout, textContent, "Powered by Zoko")
 	if err != nil {
 		log.Fatalf("Failed to generate order summary: %v", err)
 	}

@@ -66,34 +66,33 @@ type TextContent struct {
 }
 
 // GenerateOrderSummary creates an image of the order summary and writes it to the provided file
-func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout, textContent TextContent) error {
+func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout, textContent TextContent, footer string) error {
 	// Load fonts
 	headerFont := loadFont(gobold.TTF, layout.FontSizes.Header)
 	itemFont := loadFont(goregular.TTF, layout.FontSizes.Item)
 	subheaderFont := loadFont(gobold.TTF, layout.FontSizes.Subheader)
 	totalFont := loadFont(gobold.TTF, layout.FontSizes.Total)
 
-	// Initialize current Y position
-	y := layout.Margin
-
 	// Calculate content width
 	contentWidth := layout.Width - layout.Margin*4
 	priceColumnWidth := 100
 	itemColumnWidth := contentWidth - priceColumnWidth
 
-	// Header
+	// Calculate heights
 	headerHeight := int(math.Ceil(getTextHeight(headerFont)))
-	y += headerHeight + layout.SectionSpacing
-
-	// Horizontal line after header
-	y += 1 + layout.SectionSpacing
-
-	// Items subheader
+	headerPadding := layout.SectionSpacing // Use SectionSpacing for consistent padding
 	subheaderHeight := int(math.Ceil(getTextHeight(subheaderFont)))
+	itemHeight := int(math.Ceil(getTextHeight(itemFont)))
+	totalSectionHeight := int(math.Ceil(getTextHeight(totalFont)))
+
+	// Calculate total height
+	y := layout.Margin
+	y += headerPadding // Add top padding for header
+	y += headerHeight
+	y += headerPadding // Add bottom padding for header
+	y += 1 + layout.SectionSpacing // Horizontal line after header
 	y += subheaderHeight + layout.ItemSpacing
 
-	// Items (with wrapped text)
-	itemHeight := int(math.Ceil(getTextHeight(itemFont)))
 	for _, item := range order.Items {
 		itemText := formatItem(item)
 		wrappedText := wrapText(itemText, itemColumnWidth, layout.FontSizes.Item)
@@ -101,18 +100,10 @@ func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout
 		y += layout.ItemSpacing // Extra spacing between items
 	}
 
-	// Space before totals
 	y += layout.SectionSpacing
-
-	// Horizontal line before totals
-	y += 1 + layout.SectionSpacing
-
-	// Total sections (subtotal, shipping, taxes, total)
-	totalSectionHeight := int(math.Ceil(getTextHeight(totalFont)))
-	y += 5*totalSectionHeight + 5*layout.SectionSpacing
-
-	// Bottom margin
-	y += layout.Margin
+	y += 1 + layout.SectionSpacing // Horizontal line before totals
+	y += 5*totalSectionHeight + 5*layout.SectionSpacing // Total sections
+	y += layout.Margin // Bottom margin
 
 	// Create the image with the calculated height
 	img := image.NewRGBA(image.Rect(0, 0, layout.Width, y))
@@ -128,16 +119,17 @@ func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout
 	textColor := color.RGBA{60, 60, 60, 255}
 
 	// Reset Y position for drawing
-	y = layout.Margin + layout.HeaderHeight/2
+	y = layout.Margin + headerPadding // Start with top padding
 
 	// Draw header
-	drawCenteredText(img, textContent.HeaderText, layout.Width/2, y, layout.FontSizes.Header, textColor, true)
-	drawHorizontalLine(img, layout.Margin*2, layout.Width-layout.Margin*2, y+layout.HeaderHeight/2, color.RGBA{220, 220, 220, 255})
+	drawCenteredText(img, textContent.HeaderText, layout.Width/2, y+headerHeight, layout.FontSizes.Header, textColor, true)
+	y += headerHeight + headerPadding // Move y down by header height and bottom padding
+	drawHorizontalLine(img, layout.Margin*2, layout.Width-layout.Margin*2, y, color.RGBA{220, 220, 220, 255})
+	y += layout.SectionSpacing
 
 	// Draw items
-	y += layout.HeaderHeight/2 + layout.SectionSpacing
 	drawLeftAlignedText(img, textContent.ItemsText, layout.Margin*2, y, layout.FontSizes.Subheader, textColor, true)
-	y += int(layout.FontSizes.Subheader) + layout.ItemSpacing
+	y += subheaderHeight + layout.ItemSpacing
 
 	for _, item := range order.Items {
 		itemText := formatItem(item)
@@ -152,6 +144,9 @@ func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout
 			}
 
 			y += itemHeight
+			if i < len(wrappedText)-1 {
+				y += layout.ItemSpacing
+			}
 		}
 
 		y += layout.ItemSpacing
@@ -162,17 +157,25 @@ func GenerateOrderSummary(order OrderSummary, outputFile *os.File, layout Layout
 	y += layout.SectionSpacing
 
 	// Draw totals
-	drawTotalLine(img, textContent.SubtotalText, order.Subtotal, y, layout, textColor, order.Currency)
+	drawTotalLine(img, textContent.SubtotalText, order.Subtotal, y, layout, textColor, order.Currency, false)
 	y += totalSectionHeight + layout.SectionSpacing
-	drawTotalLine(img, textContent.DiscountText, order.Discount, y, layout, textColor, order.Currency)
+	drawTotalLine(img, textContent.DiscountText, order.Discount, y, layout, textColor, order.Currency, false)
 	y += totalSectionHeight + layout.SectionSpacing
-	drawTotalLine(img, textContent.ShippingText, order.Shipping, y, layout, textColor, order.Currency)
+	drawTotalLine(img, textContent.ShippingText, order.Shipping, y, layout, textColor, order.Currency, false)
 	y += totalSectionHeight + layout.SectionSpacing
-	drawTotalLine(img, textContent.TaxesText, order.Taxes, y, layout, textColor, order.Currency)
+	drawTotalLine(img, textContent.TaxesText, order.Taxes, y, layout, textColor, order.Currency, false)
 	y += totalSectionHeight + layout.SectionSpacing
 	drawHorizontalLine(img, layout.Margin*2, layout.Width-layout.Margin*2, y, color.RGBA{220, 220, 220, 255})
 	y += layout.SectionSpacing
-	drawTotalLine(img, textContent.TotalText, order.Total, y, layout, textColor, order.Currency)
+	drawTotalLine(img, textContent.TotalText, order.Total, y, layout, textColor, order.Currency, true)
+
+	// Add footer text in the bottom margin
+	footerFontSize := layout.FontSizes.Item * 0.8 // Slightly smaller than regular item text
+	footerColor := color.RGBA{128, 128, 128, 255} // Gray color
+	footerFont := loadFont(goregular.TTF, footerFontSize)
+	footerHeight := int(math.Ceil(getTextHeight(footerFont)))
+	footerY := img.Bounds().Max.Y - layout.Margin + (layout.Margin-footerHeight) // Center vertically in the bottom margin
+	drawCenteredText(img, footer, layout.Width/2, footerY, footerFontSize, footerColor, false)
 
 	// Save the image
 	return png.Encode(outputFile, img)
@@ -293,10 +296,10 @@ func measureTextWidth(text string, size float64) int {
 	return font.MeasureString(f, text).Round()
 }
 
-func drawTotalLine(img *image.RGBA, label string, value float64, y int, layout Layout, textColor color.Color, currency string) {
-	drawLeftAlignedText(img, label, layout.Margin*3, y, layout.FontSizes.Item, textColor, false)
+func drawTotalLine(img *image.RGBA, label string, value float64, y int, layout Layout, textColor color.Color, currency string, bold bool) {
+	drawLeftAlignedText(img, label, layout.Margin*3, y, layout.FontSizes.Item, textColor, bold)
 	valueStr := fmt.Sprintf("%s %.2f", currency, value)
-	drawRightAlignedText(img, valueStr, layout.Width-layout.Margin*2, y, layout.FontSizes.Item, textColor, false)
+	drawRightAlignedText(img, valueStr, layout.Width-layout.Margin*2, y, layout.FontSizes.Item, textColor, bold)
 }
 
 func drawCenteredText(img *image.RGBA, text string, x, y int, size float64, c color.Color, bold bool) {
